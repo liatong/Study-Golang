@@ -51,6 +51,26 @@ func readCommand(infile string)(values []string,err error){
 	return
 }
 
+func callCommand(command string){
+	var req Request
+	var resp Response
+	//call server Getinfo
+	client,err := rpc.DialHTTP("tcp","127.0.0.1:1224")
+	if err != nil{
+		fmt.Println("Can't not connect to sever")
+		return 
+	}
+	//call the function. need args server obj function,request,response	
+	//req := Request{"This is action"}
+	req.Action = command
+	err = client.Call("Watcher.Getinfo",req,&resp)
+	if err != nil {
+		fmt.Println("Call server function error")
+		return 
+	}	
+	fmt.Println(resp)
+}
+
 func main(){
 	command := flag.String("c","getinfo","Get server info")
 	server_addr := flag.String("i","127.0.0.1","Server ip addr")
@@ -67,30 +87,13 @@ func main(){
 	fmt.Printf("Server ip addr is: %s\n",*server_addr)
 	fmt.Printf("Server listen port is: %s\n",*server_port)	
 
-	//call server Getinfo
-	client,err := rpc.DialHTTP("tcp","127.0.0.1:1224")
-	if err != nil{
-		fmt.Println("Can't not connect to sever")
-		return
-	}
 	// define a response struct. only use int struct at there
-	var replay int
 	//get commands
-	commands,err := readCommand("/tmp/command")
+	commands,_ := readCommand("/tmp/command")
 	fmt.Print(commands)
-	var req Request
-	var resp Response
 	for _,command := range commands{
-	    //call the function. need args server obj function,request,response	
-	    //req := Request{"This is action"}
-	    req.Action = command
-	    err = client.Call("Watcher.Getinfo",req,&resp)
-	    if err != nil {
-	    	fmt.Println("Call server function error")
-	    	return
-	    }	
-	    fmt.Println(resp)
-	    fmt.Println("Call result ",replay)
+		go callCommand(command)
+                fmt.Print(command,"\n")
 	}
 
 }
