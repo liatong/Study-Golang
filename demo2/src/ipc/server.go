@@ -1,4 +1,4 @@
-packge ipc 
+package ipc 
 
 import (
 	"encoding/json"
@@ -42,10 +42,10 @@ func (server *Ipcserver)Connect()chan string{
 			if err != nil{
 				fmt.Println("error format")
 			}
-			resp := server.Handler(req.Method,req.Params)
+			resp := server.Handle(req.Method,req.Params)
 			// resp is struct need encode to byte steam let it can be send as a string to channel.
 			b,err := json.Marshal(resp)
-			connectiong <- b
+			connecting <- string(b)
 		}
 		fmt.Println("Connect close.")
 	}(session)
