@@ -7,20 +7,25 @@ import (
 	"ipc"
 )
 
-var _,ipc.Server = &CenterServer()
+var _ ipc.Server = &CenterServer{}
 
+type Message struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+	Content string `json:"content"`
+}
 
-tyep CenterServer struct{
-    servers map[string] ipc.server
+type CenterServer struct {
+    servers map[string] ipc.Ipcserver
     players []*Player
-    rooms []*Room
+    //rooms []*Room
     mutext sync.RWMutex
 }
 
 func NewCenterServer()*CenterServer{
-     servers = make(map[string] ipc.Server)
+     servers = make(map[string] ipc.Ipcserver)
      players = make([]*Player,0)
-     return &CenterServer{servers:servers,player:players}
+     return &CenterServer{servers:servers,players:players}
 
 }
 
@@ -46,11 +51,13 @@ func (server *CenterServer)removePlayer(params string)error{
         if v.Name == params {
            if len(server.players) == 1 {
                 server.players = make([]*Player,0)
-           }elseif i == len(server.players) -1 {
+           } 
+           if i == len(server.players)  {
 		server.players = server.player[:i]
-           }elseif i == 0 {
+           }
+           if i == 0 {
 		server.players = server.player[1:]
-	   }elseif {
+	   }else {
 		server.players = append(server.players[:i-1],server.players[:1+1]...)
 	   }
         return nil 
@@ -95,28 +102,28 @@ func (server *CenterServer)Handle(method,params string) *ipc.Response{
        case "addplayer":
 	   err := server.addPlayer(params)
 	   if err != nil {
-   	      return &ipc.Response(Code.err.Error())
+   	      return &ipc.Response{Code.err.Error()}
 	   }
        case "removeplayer":
            err := server.removePlayer(params)
            if err != nil{
-   	      return &ipc.Response(Code.err.Error())
+   	      return &ipc.Response{Code.err.Error()}
 	   }
        case "listplayer":
 	   players,err := server.listPlayer(params)
            if err != nil{
-   	      return &ipc.Response(Code.err.Error())
+   	      return &ipc.Response{Code.err.Error()}
 	   }
        case "broadcast":
 	   err  := server.broadcast(params)
            if err != nil{
-   	      return &ipc.Response(Code.err.Error())
+   	      return &ipc.Response{Code.err.Error()}
 	   }
-	   return &ipc.Reponse(Code:"200")
+	   return &ipc.Reponse{Code:"200"}
 	default:
- 	    return &ipc.Response(Code:"404",Boby:method+":"+params)
+ 	    return &ipc.Response{Code:"404",Boby:method+":"+params}
     }
-    return &ipc.Response(Code:"200")
+    return &ipc.Response{Code:"200"}
 }
 
 func (server *CenterServer)Name()string{

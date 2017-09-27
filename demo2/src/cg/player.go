@@ -9,7 +9,7 @@ type Player struct{
     Level int
     Exp   int
     Root  int
-    mq  chan *message
+    mq  chan *Message
 }
 
 func NewPlayer() * Player{

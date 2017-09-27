@@ -15,16 +15,16 @@ type Response struct {
 	Body string "body"
 }
 
-type server interface {
+type Server interface {
 	Name() string
 	Handle(method,params string) *Response
 }
 
 type Ipcserver struct {
-	server
+	Server
 }
 
-func NewIpcserver(server server)*Ipcserver{
+func NewIpcserver(server Server)*Ipcserver{
 	return &Ipcserver{server}
 }
 
