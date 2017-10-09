@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-//	"io"
+	"io"
 	"os"
 	"io/ioutil"
 	"net"
 	"net/rpc"
 	"net/http"
 	"encoding/json"
+	"bufio"
 )
 type Request struct{
 	Action string	
@@ -26,15 +27,48 @@ type Node struct{
 
 type Watcher int
 func(w *Watcher)Getinfo(req Request,resp *Response)error{
-	fmt.Print(req)
-        configfile := "/tmp/config"
+	//fmt.Println("Requst from cline:",req)
+        configfile := "/root/config"
         config,err := ioutil.ReadFile(configfile)
         if err != nil {
             config = nil
         } 
+        fmt.Println(config)
 	(* resp).Header = "{'Header':{'Type':'Config'}}"
 	(* resp).Body = "{'Body':"+string(config)+"}"
 	return nil
+}
+
+func(w *Watcher)GetNode(req Request,resp *Node)error{
+	fmt.Println("Requst from cline:",req)
+        configfile := "/root/config"
+        rf,err := os.Open(configfile)
+	defer rf.Close()
+        if err != nil {
+	    return err
+	} 
+  	buf := bufio.NewReader(rf)
+	var n Node
+	for {
+	    line,err := buf.ReadString('\n')
+	    if err != nil {
+	        if err == io.EOF {
+		    fmt.Println("------")
+		    break
+		}
+		os.Exit(1)
+	    }
+            //tjstring :=`{"name":"Node1","zone":"zone2","lan":"1","ip":"192.168.1.1"}`
+	    fmt.Println(line)
+            err = json.Unmarshal([]byte(line),&n)
+            if err != nil {
+	        return err
+            }
+            fmt.Println("Node struct n.Name is:")
+            fmt.Println(n.Name)
+	    fmt.Println("----line----")
+	}
+	return err
 }
 func checkFileExist(file string)bool{
     if _,err := os.Stat(file);os.IsNotExist(err){
@@ -48,7 +82,7 @@ func main(){
 	rpc.Register(watcher)
 	rpc.HandleHTTP()
         //-----check file exist and create config file-----//
-        configfile := "/tmp/config"
+        configfile := "/root/config"
         if  ! checkFileExist(configfile){
             _,err := os.Create(configfile)
 	    if err != nil{
@@ -69,8 +103,26 @@ func main(){
             panic(err)
         }
         fmt.Println(string(b)) 
-        //-----Read line from file---//
+
+        //-----Read pea line from file---//
         rf,err := os.Open(configfile)
+	defer rf.Close()
+        if err != nil {
+	    os.Exit(1)
+	} 
+  	buf := bufio.NewReader(rf)
+	for {
+	    line,err := buf.ReadString('\n')
+	    if err != nil {
+	        if err == io.EOF {
+		    fmt.Println("------")
+		    break
+		}
+		os.Exit(1)
+	    }
+	    fmt.Println("----line----")
+	    fmt.Println(line)
+	}
          
         //----from struct to byte[]  to json string ----//
         var n Node
@@ -87,7 +139,7 @@ func main(){
         if err != nil {
           fmt.Println("Can'g direct change")
         }
-        fmt.Println("Node struct n.Name is:\n")
+        fmt.Println("Node struct n.Name is:")
         fmt.Println(n.Name)
 
 	l,err := net.Listen("tcp",":1224")
