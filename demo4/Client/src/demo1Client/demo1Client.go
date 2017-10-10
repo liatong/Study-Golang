@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"io/ioutil"
 	"regexp"
+	"time"
 )
 
 var Usage = func(){
@@ -40,8 +41,9 @@ type Netstatus struct {
 }
 func readCommand(infile string)(values []string,err error){
 	//open file read command
-	infile1 := "/root/command"
-	file,err := os.Open(infile1)
+	//infile1 := "./command"
+	values = make([]string,0)
+	file,err := os.Open(infile)
 	if err != nil {
 		fmt.Println("open file fail!")
 		return
@@ -62,13 +64,38 @@ func readCommand(infile string)(values []string,err error){
 			return		
 		}
 		str := string(line)
-		//fmt.Print(str)
+		fmt.Printf("Test:GetNode:readCommand----%s",str)
+		//fmt.Printf("Test:GetNode:readCommand len is ----%d",len(str))
 		values = append(values,str)
 	}
 	return
+        //------another read pear line from file method ----//
+	//infile1 := "./command"
+	//values = make([]string,0)
+        //rf,err := os.Open(infile)
+	//defer rf.Close()
+        //if err != nil {
+	//    return nil,err
+	//} 
+  	//buf := bufio.NewReader(rf)
+	//for {
+	//    line,err := buf.ReadString('\n')
+	//    if err != nil {
+	//        if err == io.EOF {
+	//	    fmt.Println("------")
+	//	    break
+	//	}
+	//        return nil,err
+	//    }
+	//    str := string(line)
+	//    fmt.Printf("Test:GetNode:readCommand----%s",str)
+	//    fmt.Printf("Test:GetNode:readCommand len is----%d",len(str)
+	//    values = append(values,str)
+	//}
+        //return values,nil 
 }
 
-func callGetNode(name string){
+func callGetNode(name string,cn chan Node){
 	var req Request
 	var resp Node
 	client,err := rpc.DialHTTP("tcp","127.0.0.1:1224")
@@ -76,13 +103,17 @@ func callGetNode(name string){
 		fmt.Println("Can't not connect to sever")
 		return 
 	}
+        fmt.Printf("Test:GetNode:NodeName ---- name is %s\n",name)
 	req.Action = name
+        fmt.Printf("Test:GetNode:NodeName ---- name len %d",len(name))
+        fmt.Printf("Test:GetNode:NodeName ---- name len %d",len("Node1"))
 	err = client.Call("Watcher.GetNode",req,&resp)
 	if err != nil {
 		fmt.Println("Call server function error")
 		return 
 	}	
-	fmt.Println(resp)
+        fmt.Printf("Test:GetNode:Response---Response Node is: %s\n",resp.Name)
+        cn <- resp
 }
 func callCommand(command string,c chan Response){
 	var req Request
@@ -115,6 +146,16 @@ func detectNet(ipaddr string)map[string]string{
      return  m
 }
 
+func realywork(u string ,queue chan string,backchannel chan string){
+      fmt.Printf("Realywork--------func realywork be exec:%s------\n",u)
+      time.Sleep(2*time.Second)
+      fmt.Printf("Realywork-------func  realywork end delete one from queue------\n")
+      <- queue
+      backchannel <- u
+      time.Sleep(3*time.Second)
+      
+}
+
 func main(){
 	command := flag.String("c","getinfo","Get server info")
 	server_addr := flag.String("i","127.0.0.1","Server ip addr")
@@ -133,39 +174,57 @@ func main(){
 
 	// define a response struct. only use int struct at there
 
-	//get commands
-	commands,_ := readCommand("/root/command")
-	fmt.Print(commands)
-	c := make(chan Response)
+	//-------get commands--------//
+	//commands,_ := readCommand("./command")
+	//fmt.Print(commands)
+        //// -- test make len(vars) --
+        var urls = []string{"01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19"} 
+	//c := make(chan Response,len(urls))
 
-	for _,command := range commands{
-		fmt.Print("-------")
-		go callCommand(command,c)
-                fmt.Print(command,"\n")
+	//for _,command := range commands{
+	//	fmt.Print("-------")
+	//	go callCommand(command,c)
+        //        fmt.Print(command,"\n")
+	//}
+	//for i:=0;i<len(commands);i++{
+	//   select {
+	//     case resp := <- c:
+	//	 fmt.Print(resp)
+	//         fmt.Print("--Have a gorouting finesh--\n") 
+	//     //default:
+ 	//     //    fmt.Print("This is a default")
+	//   }
+	//}
+	//fmt.Print("----All Call command is end -----\n")
+
+        //-------- test get Node --------//
+        nodes,_ := readCommand("./node")
+        cn := make(chan Node)
+	fmt.Printf("Test:GetNode:Read all node list is:%s",nodes)
+	for _,node := range nodes{
+                fmt.Printf("Test:GetNode:Node ---node name:%s",node) 
+                fmt.Printf("Test:GetNode:Node len ---node name:%d",len(node)) 
+		go callGetNode(node,cn)
+                fmt.Print(node,"\n")
 	}
-	for i:=0;i<len(commands);i++{
+
+	for i:=0;i<len(nodes);i++{
 	   select {
-	     case resp := <- c:
+	     case resp := <- cn:
 		 fmt.Print(resp)
-	         fmt.Print("--Have a gorouting finesh--\n") 
+	         fmt.Print("Test:GetNode:--Have a gorouting finesh--\n") 
 	     //default:
  	     //    fmt.Print("This is a default")
 	   }
 	}
-	fmt.Print("----All Call command is end -----\n")
-        //get Node
-        //nodes,_ := readCommand("/root/node")
-	//fmt.Print(nodes)
-	//for _,node := range nodes{
-	//	go callGetNode(node)
-        //        fmt.Print(node,"\n")
-	//}
 	
 	//------Here need to wait all go return---------//
 
 	//------Run os command---------//
 
-	cmd := exec.Command("/bin/bash","-c","ping -q -c 5 192.168.1.1")
+	fmt.Print("----Testing exec.command ping -----\n")
+
+	cmd := exec.Command("/bin/bash","-c","ping -q -c 5 127.0.0.1")
 	
 	stdout,err := cmd.StdoutPipe()
 	if err != nil {
@@ -210,5 +269,28 @@ func main(){
 	fmt.Println(reg1.FindAllString(regmsg,-1))
 	m := detectNet("test")
         fmt.Println(m)
+	fmt.Print("----End testing exec.Command ping -----\n")
+
+	//--------Test goroutime queue ------//
+       //var urls = []string{"01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19"} 
+       backchannel := make(chan string,len(urls))
+       queue := make(chan string,5)
+
+       go func(){
+            for _,u := range urls {
+		 fmt.Printf("Queue------start to  go func to run:%d--------\n",len(queue))	
+	 	 queue <- u
+		 fmt.Printf("Queue------Queue not full can  add go func to run --------\n")	
+		 go  realywork(u,queue,backchannel )
+            }
+       }()
+       for i:=0;i<len(urls);i++{
+          select {
+            case resp := <- backchannel:
+                fmt.Printf("Main--%s:Have a gorouting finesh--\n",resp) 
+            //default:
+            //    fmt.Print("This is a default")
+          }
+       }
 
 }
