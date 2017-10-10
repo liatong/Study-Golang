@@ -77,9 +77,9 @@ func(w *Watcher)GetNode(req Request,resp *Node)error{
             if strings.EqualFold(req.Action,n.Name) {
             //if true {
                 fmt.Printf("Test:GetNode:Response---Action == n.Name")
-                //----------NOTE!!!!! this mush be a value *resp=n is a value,resp=&n is a point value, will not return!!!!--------//
+                //----------NOTE!!!!! this mush be a value *resp=n is a value,dont use this resp=&n is a point value, will not return!!!!--------//
                 *resp = n
-                fmt.Printf("Test:GetNode:Response---Response Node is: %s\n",resp.Name)
+                //fmt.Printf("Test:GetNode:Response---Response Node is: %s\n",resp.Name)
                 break
             }else{
 	        fmt.Printf("Test:GetNode: ---Action != n.Name")
@@ -98,6 +98,7 @@ func main(){
 	watcher := new(Watcher)
 	rpc.Register(watcher)
 	rpc.HandleHTTP()
+
         //-----check file exist and create config file-----//
         configfile := "./config"
         if  ! checkFileExist(configfile){
@@ -115,50 +116,50 @@ func main(){
 	}
 
 	//------Read config file------//
-        b,err := ioutil.ReadFile(configfile)       
-        if err != nil {
-            panic(err)
-        }
-        fmt.Println(string(b)) 
+        //b,err := ioutil.ReadFile(configfile)       
+        //if err != nil {
+        //    panic(err)
+        //}
+        //fmt.Println(string(b)) 
 
         //-----Read pea line from file---//
-        rf,err := os.Open(configfile)
-	defer rf.Close()
-        if err != nil {
-	    os.Exit(1)
-	} 
-  	buf := bufio.NewReader(rf)
-	for {
-	    line,err := buf.ReadString('\n')
-	    if err != nil {
-	        if err == io.EOF {
-		    fmt.Println("------")
-		    break
-		}
-		os.Exit(1)
-	    }
-	    fmt.Println("----line----")
-	    fmt.Println(line)
-	}
+        //rf,err := os.Open(configfile)
+	//defer rf.Close()
+        //if err != nil {
+	//    os.Exit(1)
+	//} 
+  	//buf := bufio.NewReader(rf)
+	//for {
+	//    line,err := buf.ReadString('\n')
+	//    if err != nil {
+	//        if err == io.EOF {
+	//	    fmt.Println("------")
+	//	    break
+	//	}
+	//	os.Exit(1)
+	//    }
+	//    fmt.Println("----line----")
+	//    fmt.Println(line)
+	//}
          
         //----from struct to byte[]  to json string ----//
-        var n Node
-        n1 := Node{"Node2","zone1","1","192.168.1.2"}
-        bn1,err := json.Marshal(n1)
-        fmt.Println(bn1)
-        jn1 := string(bn1)
-        fmt.Println("------------")
-        fmt.Println(jn1)
+        //var n Node
+        //n1 := Node{"Node2","zone1","1","192.168.1.2"}
+        //bn1,err := json.Marshal(n1)
+        //fmt.Println(bn1)
+        //jn1 := string(bn1)
  
         //-----from json string to struct ---// 
-        tjstring :=`{"name":"Node1","zone":"zone2","lan":"1","ip":"192.168.1.1"}`
-        err = json.Unmarshal([]byte(tjstring),&n)
-        if err != nil {
-          fmt.Println("Can'g direct change")
-        }
-        fmt.Println("Node struct n.Name is:")
-        fmt.Println(n.Name)
+        //tjstring :=`{"name":"Node1","zone":"zone2","lan":"1","ip":"192.168.1.1"}`
+        //err = json.Unmarshal([]byte(tjstring),&n)
+        //if err != nil {
+        //  fmt.Println("Can'g direct change")
+        //}
+        //fmt.Println("Node struct n.Name is:")
+        //fmt.Println(n.Name)
 
+
+	//------main http listen----//
 	l,err := net.Listen("tcp",":1224")
 	if err != nil {
 		fmt.Println("Liston fail")
