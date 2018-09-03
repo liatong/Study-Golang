@@ -41,7 +41,7 @@ func TestOps(t *testing.T) {
 	fmt.Print("\np := *mm and this p also is a point var:-->", p)
 	fmt.Print("\np is not a point var. but *p is a what? --> p (type MusicManager) \n")
 	fmt.Print("&p also is a point. so that &p = mm:--> ", &p)
-	//&取了对象的地址，  交给别人，别人是指针变量。 mm是一个指针变量，存的是指针。   *mm 地址变量被解开，变回来了具体的对象。p就又编程是一个变量而已。存储着对象的地址。
+	//&取了对象的地址，交给别人，别人是指针变量。 mm是一个指针变量，存的是指针。   *mm 地址变量被解开，变回来了具体的对象。p就又编程是一个变量而已。存储着对象的地址。
 
 	//mm本身是个变量，有自己的地址空间。mm里面存的是别人的地址。这个地址指向的是一个对象。能引用。
 	// 0x00000（mm)-> 0x30000 -> object
